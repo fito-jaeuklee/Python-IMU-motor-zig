@@ -6,14 +6,16 @@ import matplotlib.pyplot as plot
 import numpy as np
 import one_cell_imu_data_extraction
 from scipy.signal import savgol_filter
+from tkinter import filedialog
 
-offset = 618
+
+offset = 16423
 hz_setup = 100
 data_count = 10000
 RESAMPLING_RATIO = 100 / 158.85
 """Distance between origin point of disk and imu sensor (cm)"""
 RADIUS = 13
-file_path = "C:/Users/jaeuk/workspace/IMU_calibration_with_motor/cell data"
+file_path = filedialog.askopenfilename()
 
 
 def clean_serial_data(data):
@@ -81,15 +83,15 @@ def resampling_g_data(data, sampling_time):
 
 def drawing_xyz_accel(g, ax, ay, az, time, accel_len):
     frame = plot.gca()
-    N = 55
-    re = np.convolve(g, np.ones((N,))/N, mode='valid')
-    print(re)
-    plot.plot(time[:len(time) - N + 1], re, "-y", label="G-RPM")
+    # N = 55
+    # re = np.convolve(g, np.ones((N,))/N, mode='valid')
+    # print(re)
+    # plot.plot(time[:len(time) - N + 1], re, "-y", label="G-RPM")
+    plot.plot(time, g, "-y", label="G-RPM")
 
-
-    # plot.plot(accel_len, ax, "-r", label="X")
-    # plot.plot(accel_len, ay, "-g", label="Y")
-    # plot.plot(accel_len, az, "-b", label="Z")
+    plot.plot(accel_len, ax, "-r", label="X")
+    plot.plot(accel_len, ay, "-g", label="Y")
+    plot.plot(accel_len, az, "-b", label="Z")
 
     plot.title('Gravitational acceleration from RPM')
 
@@ -98,7 +100,7 @@ def drawing_xyz_accel(g, ax, ay, az, time, accel_len):
 
     # Give y axis label for the sine wave plot
     plot.ylabel('g(9.8m/s2)')
-    plot.ylim(0, 20)
+    plot.ylim(-20, 20)
     plot.grid(True)
     # frame.axes.get_yaxis().set_visible(False)
 
@@ -156,10 +158,12 @@ if __name__ == '__main__':
             length = len(barr)
             time = np.arange(0, length, 1)
 
-            imuaccel_list = one_cell_imu_data_extraction.loadv2('./cell data/cell_imu_data_test.im', True)
+            imuaccel_list = one_cell_imu_data_extraction.loadv2(file_path, True)
             length = len(imuaccel_list[:, 0])
             print("IMU data length = ", length)
             accel_len = np.arange(0, length-offset, 1)
+
+
 
             drawing_xyz_accel(open_g_data, imuaccel_list[offset:, 0], imuaccel_list[offset:, 1], imuaccel_list[offset:, 2], time, accel_len)
 
