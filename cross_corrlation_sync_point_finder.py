@@ -2,6 +2,26 @@ import matplotlib.pyplot as plt
 from scipy import signal
 import numpy as np
 import one_cell_imu_data_extraction
+from sklearn.preprocessing import MinMaxScaler
+
+
+def fft(mag_list):
+    from scipy.fftpack import fft
+    N = 64
+    T = 1.0 / 100
+    yf = fft(mag_list, N)
+    xf = np.linspace(0.0, 1.0 / (2.0 * T), N // 2)
+
+    yf[0]
+
+    return xf, yf
+
+
+def normalize_data(before_norm_list):
+    scaler = MinMaxScaler()
+    before_norm_list = scaler.fit_transform(before_norm_list)
+    return before_norm_list
+
 
 def moving_average_filter(before_filter_data):
     N = 100  # number of points to test on each side of point of interest, best if even
@@ -26,6 +46,7 @@ def moving_average_filter(before_filter_data):
     time = np.arange(0, len(movavg), 1)
 
     return movavg
+
 
 def drawing_xyz_accel(g, ax, ay, az, time, accel_len):
     frame = plt.gca()
@@ -76,7 +97,7 @@ def lag_finder(y1, y2, sr):
 
 open_g_data = []
 print("Drawing G graph and x/y/z cell acceleration graph ")
-with open('C:/Users/jaeuk/Downloads/rpm_data (1).txt', 'rb') as fp:
+with open('./rpm_data (1).txt', 'rb') as fp:
     barr = fp.readlines()
     print('total length', len(barr))
 
@@ -87,7 +108,7 @@ time = np.arange(0, length, 1)
 
 open_g_data = moving_average_filter(open_g_data)
 
-imuaccel_list = one_cell_imu_data_extraction.loadv2("C:/Users/jaeuk/Downloads/cell_imu_data_test (2).im", True)
+imuaccel_list, imugyro_list, imumag_list = one_cell_imu_data_extraction.loadv2("./cell data/cell_imu_data_test (1).im", True)
 length = len(imuaccel_list[:, 2])
 print("IMU data length = ", length)
 accel_len = np.arange(0, length , 1)
@@ -116,10 +137,19 @@ print("After shifting frame")
 
 accel_len = np.arange(0, len(imuaccel_list[asd:, 1]) , 1)
 plt.plot(time, open_g_data, "-y", label='RPM-G')
-plt.plot(accel_len, imuaccel_list[asd:, 1], "-g", label='Y')
-plt.plot(accel_len, imuaccel_list[asd:, 0], "-r", label='X')
-plt.plot(accel_len, imuaccel_list[asd:, 2], "-b", label='Z')
 
+imumag_list = normalize_data(imumag_list)
+
+plt.plot(accel_len, imumag_list[asd:, 1], "-g", label='Y')
+plt.plot(accel_len, imumag_list[asd:, 0], "-r", label='X')
+plt.plot(accel_len, imumag_list[asd:, 2], "-b", label='Z')
 plt.show()
 
-# lag_finder(open_g_data, imuaccel_list[:, 2], sr)
+xmag, ymag = fft(imumag_list[asd:, 0])
+plt.subplot(211)
+plt.plot(imumag_list[asd:, 0])
+
+plt.subplot(212)
+plt.stem(xmag, 2.0/64 * np.abs(ymag[0:64//2]))
+plt.xticks(xmag, rotation=40)
+plt.show()

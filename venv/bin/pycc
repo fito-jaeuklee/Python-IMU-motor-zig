@@ -1,0 +1,3 @@
+#!/Users/jaeuklee/workspace/imu_zig_test/venv/bin/python
+from numba.pycc import main
+main()

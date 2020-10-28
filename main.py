@@ -11,11 +11,11 @@ from tkinter import filedialog
 
 offset = 16423
 hz_setup = 100
-data_count = 10000
+data_count = 20000
 RESAMPLING_RATIO = 100 / 158.85
 """Distance between origin point of disk and imu sensor (cm)"""
 RADIUS = 13
-file_path = filedialog.askopenfilename()
+file_path = "./cell data"
 
 
 def clean_serial_data(data):
@@ -121,7 +121,7 @@ if __name__ == '__main__':
         data = []
 
         if command.decode('utf-8') == "1":
-            dev = serial.Serial("COM65", baudrate=2000000, timeout=0.3)
+            dev = serial.Serial("/dev/tty.usbserial-1410", baudrate=2000000, timeout=0.3)
             time.sleep(1)
 
             print("Start RPM recording")
@@ -143,8 +143,9 @@ if __name__ == '__main__':
             print("Extract cell imu data ")
             cell_com_port_name = one_cell_imu_data_extraction.get_cell_com_port(1155)
             print(cell_com_port_name)
-            one_cell_imu_data_extraction.read_and_save_imu_data(cell_com_port_name, file_path, "cell_imu_data_test", 4000)
-            one_cell_imu_data_extraction.erase_cell_nand_flash(cell_com_port_name)
+            nand_flag = one_cell_imu_data_extraction.read_and_save_imu_data(cell_com_port_name, file_path, "cell_imu_data_test", 4000)
+            if nand_flag == True:
+                one_cell_imu_data_extraction.erase_cell_nand_flash(cell_com_port_name)
 
         elif command.decode('utf-8') == "3":
             open_g_data = []
@@ -158,12 +159,10 @@ if __name__ == '__main__':
             length = len(barr)
             time = np.arange(0, length, 1)
 
-            imuaccel_list = one_cell_imu_data_extraction.loadv2(file_path, True)
+            imuaccel_list, imugyro_list, imumag_list = one_cell_imu_data_extraction.loadv2("./cell data/cell_imu_data_test_23_30.im", True)
             length = len(imuaccel_list[:, 0])
             print("IMU data length = ", length)
             accel_len = np.arange(0, length-offset, 1)
-
-
 
             drawing_xyz_accel(open_g_data, imuaccel_list[offset:, 0], imuaccel_list[offset:, 1], imuaccel_list[offset:, 2], time, accel_len)
 

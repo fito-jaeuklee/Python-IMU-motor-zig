@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plot
 from sklearn.metrics import accuracy_score
-import similaritymeasures
+# import similaritymeasures
 
 
 
@@ -13,7 +13,7 @@ def drawing_xyz_accel(g, g_wo_filter, time):
     # plot.plot(time[:len(time) - N + 1], re, "-y", label="G-RPM")
     plot.plot(time, g, "-y", label="G-RPM")
 
-    plot.plot(time, g_wo_filter, "-r", label="X", alpha=0.5)
+    # plot.plot(time, g_wo_filter, "-r", label="X", alpha=0.5)
     # plot.plot(accel_len, ay, "-g", label="Y")
     # plot.plot(accel_len, az, "-b", label="Z")
 

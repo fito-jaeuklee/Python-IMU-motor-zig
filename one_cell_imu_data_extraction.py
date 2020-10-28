@@ -13,7 +13,7 @@ CELL_GPS_IMU_READ_CHUCK_SIZE = 2048
 SYSCOMMAND_ERASE_NAND_FLASH = "AC C0 01 15 78"
 SYSCOMMAND_ERASE_NAND_FLASH_RESP_SIZE = 7
 IMU_ERR_STR = "IMUERR"
-file_path = "C:/Users/jaeuk/workspace/IMU_calibration_with_motor/cell data"
+file_path = "./cell data"
 frame_to_time_scaler = 1 / 6000
 
 
@@ -74,8 +74,10 @@ def read_and_save_imu_data(port, file_save_path, filename, imu_page_size):
                     f.write(data)
                     imu_error_str_delete_flag = 0
                 imu_data_chuck_validation_cnt += 1
+        return True
     except:
         print("Not open cell serial com port.")
+        return False
         pass
 
 
@@ -169,16 +171,18 @@ def __preprocess_imuraw_wbias(raw, bias, magscale, return_ref_angle=False):
 
     # imuac = imuraw[..., :3] * ratio_acc * gpsec
     imuac = imuraw[..., :3] * ratio_acc
-    # imugy = (imuraw[..., 3:6] - bias[3:6]) * ratio_gyro
+    imugy = (imuraw[..., 3:6] - bias[3:6]) * ratio_gyro
     # imumg = (imuraw[..., 6:] - magcal) * ratio_mag
 
-    # imumg = imumg[:, [1, 0, 2]]
-    # imumg[:, 2] = -imumg[:, 2]
+    imumg = (imuraw[..., 6:]) * ratio_mag
+
+    imumg = imumg[:, [1, 0, 2]]
+    imumg[:, 2] = -imumg[:, 2]
 
     if return_ref_angle:
-        return imuac
+        return imuac, imugy, imumg
 
-    return imuac
+    return imuac, imugy, imumg
 
 
 def loadv2(fpath, return_all=False):
@@ -189,16 +193,16 @@ def loadv2(fpath, return_all=False):
     print('freq', samplefreq)
     print('bias', bias)
     magscale = saved_bias[-3:]
-    imuac = __preprocess_imuraw_wbias(r, bias, magscale, True)
+    imuac, imugy, imumag = __preprocess_imuraw_wbias(r, bias, magscale, True)
     # rq = get_reference_axis(imuac[:100], imumg[:100])
     # ahrs = NewAHRS(samplefreq, rq, mangle)
     # imuq = ahrs.batch_calc(imuac, imugy, imumg)
 
     if return_all:
-        print("Return Acceleration data")
-        return imuac
+        print("Return IMU data")
+        return imuac, imugy, imumag
 
-    return imuac
+    return imuac, imugy, imumag
 
 
 def drawing_xyz_accel(x, y, z, time):
