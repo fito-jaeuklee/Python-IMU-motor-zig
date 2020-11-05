@@ -38,7 +38,7 @@ def get_cell_com_port(cell_vendor_id):
 
 
 def read_and_save_imu_data(port, file_save_path, filename, imu_page_size):
-    print(port)
+    # print(port)
     imu_data_chuck_validation_cnt = 0
     cell_read_error_serial = []
     # TODO : 플러그를 뽑는게 아니라 실제로 timeout 걸리는 데이터 플로우를 만들어서 체크해야함
@@ -76,7 +76,7 @@ def read_and_save_imu_data(port, file_save_path, filename, imu_page_size):
                 imu_data_chuck_validation_cnt += 1
         return True
     except:
-        print("Not open cell serial com port.")
+        # print("Not open cell serial com port.")
         return False
         pass
 
@@ -84,7 +84,7 @@ def read_and_save_imu_data(port, file_save_path, filename, imu_page_size):
 def imuread_firmwarev2(fpath):
     with open(fpath, 'rb') as f:
         barr = f.read()
-        print('total bytes', len(barr))
+        # print('total bytes', len(barr))
 
         i = 0
         while True:
@@ -92,12 +92,12 @@ def imuread_firmwarev2(fpath):
                 idx = i
                 break
             i += 1
-        # print(idx)
+        # # print(idx)
         if idx is not 0:
             configs = barr[:idx]
             configs = configs.split(b',')
             configs = list(map(to_float, configs))
-            # print('parsed:', configs)
+            # # print('parsed:', configs)
         hz = configs[0]
         saved_biases = configs[1:]
 
@@ -112,7 +112,7 @@ def imuread_firmwarev2(fpath):
         bidx = idx + 4
 
         if pred_bidx != bidx:
-            print('prefix "BIAS" not found, using prediected bias idx', pred_bidx)
+            # print('prefix "BIAS" not found, using prediected bias idx', pred_bidx)
             bidx = pred_bidx
 
         i = bidx
@@ -157,14 +157,16 @@ def imuread_firmwarev2(fpath):
 
 def __preprocess_imuraw_wbias(raw, bias, magscale, return_ref_angle=False):
     imuraw = raw[:, 2:].astype(np.float32)
-    print(imuraw)
+    # print(imuraw)
 
     ratio_acc = 16. / 32768.
-    ratio_gyro = 2000.0 / 32768.0 * (np.pi / 180.)
+    # ratio_gyro = 200000.0 / 32768.0 * (np.pi / 180.)
+    # ratio_gyro = 1 / 15.881081
+    ratio_gyro = 0.061800486
     ratio_mag = 10 * 4912.0 / 32768.
     gpsec = 9.80665
 
-    print('magnetometer scale:', magscale)
+    # print('magnetometer scale:', magscale)
     imuraw[:, 6:] *= magscale
 
     # _, magcal, mangle = __find_bias(imuraw)
@@ -190,8 +192,8 @@ def loadv2(fpath, return_all=False):
     r = np.array(r)
 
     bias = np.array(bias).mean(axis=0)
-    print('freq', samplefreq)
-    print('bias', bias)
+    # print('freq', samplefreq)
+    # print('bias', bias)
     magscale = saved_bias[-3:]
     imuac, imugy, imumag = __preprocess_imuraw_wbias(r, bias, magscale, True)
     # rq = get_reference_axis(imuac[:100], imumg[:100])
@@ -199,14 +201,14 @@ def loadv2(fpath, return_all=False):
     # imuq = ahrs.batch_calc(imuac, imugy, imumg)
 
     if return_all:
-        print("Return IMU data")
+        # print("Return IMU data")
         return imuac, imugy, imumag
 
     return imuac, imugy, imumag
 
 
 def drawing_xyz_accel(x, y, z, time):
-    print("what?", time)
+    # print("what?", time)
     plot.plot(time, x, "-r", label="X")
     plot.plot(time, y, "-g", label="Y")
     plot.plot(time, z, "-b", label="Z")
@@ -231,25 +233,25 @@ def erase_cell_nand_flash(port):
         ser = serial.Serial(port[0], BAUDRATE)
         ser.write(hex_erase_buf)
         in_bin = ser.read(SYSCOMMAND_ERASE_NAND_FLASH_RESP_SIZE)
-        print("Data erase done..!")
+        # print("Data erase done..!")
     except:
-        print("Not open cell serial com port.")
+        # print("Not open cell serial com port.")
         pass
 
 
 if __name__ == '__main__':
     # cell_com_port_name = get_cell_com_port(1155)
-    # print(cell_com_port_name)
+    # # print(cell_com_port_name)
     # read_and_save_imu_data(cell_com_port_name, file_path, "cell_imu_data_test", 4000)
     # erase_cell_nand_flash(cell_com_port_name)
 
     imuaccel_list = loadv2('./cell data/cell_imu_data_test.im', True)
     length = len(imuaccel_list[:, 0])
     time = np.arange(0, length, 1)
-    print(imuaccel_list)
-    print(imuaccel_list[:, 0])
+    # print(imuaccel_list)
+    # print(imuaccel_list[:, 0])
     sum_xyz = imuaccel_list[:, 0] + imuaccel_list[:, 1] + imuaccel_list[:, 2]
-    print(sum_xyz)
+    # print(sum_xyz)
 
     drawing_xyz_accel(imuaccel_list[:, 0], imuaccel_list[:, 1], imuaccel_list[:, 2], time)
     # drawing_xyz_accel(sum_xyz, sum_xyz, sum_xyz, time)
