@@ -2,3 +2,4 @@ __pycache__/
 wav_files/
 venv/
 /cell data
+.idea/
