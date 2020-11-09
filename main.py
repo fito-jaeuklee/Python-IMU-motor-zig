@@ -12,8 +12,6 @@ import data_manage as dm
 data_count = 20000
 RESAMPLING_RATIO = 100 / 158.85
 COM_PORT_NAME = "/dev/tty.usbserial-1410"
-"""Distance between origin point of disk and imu sensor (cm)"""
-
 cut_max_limit = 13000
 saturation_sector = [3700, 4000, 5700, 6000, 7700, 8000, 9700, 10000]
 
