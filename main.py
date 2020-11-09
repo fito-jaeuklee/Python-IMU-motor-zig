@@ -11,7 +11,7 @@ import data_manage as dm
 
 data_count = 20000
 RESAMPLING_RATIO = 100 / 158.85
-COM_PORT_NAME = "/dev/tty.usbserial-1410"
+COM_PORT_NAME = "/dev/tty.usbserial-1440"
 cut_max_limit = 13000
 saturation_sector = [3700, 4000, 5700, 6000, 7700, 8000, 9700, 10000]
 
@@ -137,36 +137,36 @@ if __name__ == '__main__':
             dev = serial.Serial(COM_PORT_NAME, baudrate=2000000, timeout=0.3)
             time.sleep(1)
 
-            # print("Start RPM recording")
+            print("Start RPM recording")
             start = time.time()
             for _ in range(data_count):
                 dev.write(command)
                 line = dev.readline()
                 data.append(line)
 
-            # # print(data)
-            # print(len(data))
+            print(len(data))
             execution_time = time.time() - start
-            # print("Execution time = ", execution_time)
+            print("Execution time = ", execution_time)
 
             clean_data = dm.clean_serial_data(data)
 
-            dm.save_to_txt(clean_data, 'rpm_data.txt', execution_time)
+            dm.save_to_txt(clean_data, 'rpm_to_g_data.txt', execution_time)
 
             rpm_data, frame_length = dm.load_rpm_to_g_data()
 
-            with open("g_to_rpm.txt", 'w') as fp:
+            with open(dm.file_path + "/" + "g_to_rpm.txt", 'w') as fp:
                 for buf in rpm_data:
                     buf = abs(buf)
                     rpm = round(math.sqrt(buf / (1.11876 * math.pow(10, -5) * dm.RADIUS)), 4)
                     fp.write(str(rpm) + '\n')
 
         elif command.decode("utf-8") == "2":
-            # print("Extract cell imu data ")
+            print("Extract cell imu data ")
+            user_type_insert = input("Type cell data information = ")
             cell_com_port_name = one_cell_imu_data_extraction.get_cell_com_port(1155)
-            # print(cell_com_port_name)
+            print(cell_com_port_name)
             nand_flag = one_cell_imu_data_extraction.read_and_save_imu_data(cell_com_port_name, dm.file_path,
-                                                                            "cell_imu_data_test", 4000)
+                                                                            "cell_imu_data_test-" + user_type_insert, 4000)
             if nand_flag == True:
                 one_cell_imu_data_extraction.erase_cell_nand_flash(cell_com_port_name)
 
@@ -176,11 +176,11 @@ if __name__ == '__main__':
             file_list = os.listdir("./cell data")
 
             for file_name in file_list:
-                # print(file_name)
+                print(file_name)
                 imuaccel_list, imugyro_list, imumag_list = one_cell_imu_data_extraction.loadv2(
                     "./cell data/" + file_name, True)
                 length = len(imuaccel_list[:, 0])
-                # print("IMU data length = ", length)
+                print("IMU data length = ", length)
                 accel_len = np.arange(0, length, 1)
 
                 drawing_xyz_accel(open_g_data, imuaccel_list[:, 0], imuaccel_list[:, 1], imuaccel_list[:, 2],
@@ -188,7 +188,7 @@ if __name__ == '__main__':
 
         elif command.decode('utf-8') == "4":
             open_g_data, frame_length = dm.load_rpm_to_g_data()
-            # print("Apply moving average")
+            print("Apply moving average")
             movavg_g_data = dm.moving_average_filter(open_g_data)
 
             file_list = os.listdir("./cell data")
@@ -198,12 +198,12 @@ if __name__ == '__main__':
                 imuaccel_list, imugyro_list, imumag_list = one_cell_imu_data_extraction.loadv2(
                     "./cell data/" + file_name, True)
                 length = len(imuaccel_list[:, 0])
-                # print("IMU data length = ", length)
+                print("IMU data length = ", length)
                 accel_len = np.arange(0, length, 1)
 
-                # print("Time shifting")
+                print("Time shifting")
                 shifting_frame = dm.time_shifting(movavg_g_data, x, y, z)
-                # print(shifting_frame)
+                print(shifting_frame)
 
                 x, y, z = dm.check_absolute_val_and_change_value(imuaccel_list[:, 0], imuaccel_list[:, 1],
                                                               imuaccel_list[:, 2])
@@ -215,7 +215,7 @@ if __name__ == '__main__':
 
         elif command.decode('utf-8') == "5":
             open_g_data, frame_length = dm.load_rpm_to_g_data()
-            # print("Apply moving average")
+            print("Apply moving average")
             movavg_g_data = dm.moving_average_filter(open_g_data)
 
             file_list = os.listdir(dm.file_path)
@@ -233,20 +233,18 @@ if __name__ == '__main__':
                     # x, y, z = check_absolute_val_and_change_value(imuaccel_list[:, 0], imuaccel_list[:, 1],
                     #                                               imuaccel_list[:, 2])
 
-                    x, y, z = -imuaccel_list[:, 0], -imuaccel_list[:, 1], -imuaccel_list[:, 2]
-                    # print("Time shifting")
+                    x, y, z = -imuaccel_list[:, 0], imuaccel_list[:, 1], -imuaccel_list[:, 2]
+                    print("Time shifting")
                     shifting_frame = dm.time_shifting(movavg_g_data, x, y, z)
 
-                    # print(shifting_frame)
+                    print(shifting_frame)
 
                     accel_len = np.arange(0, len(imuaccel_list[shifting_frame:, 1]), 1)
 
                     # x, y, z = da.correct_bias(x, y, z, shifting_frame)
 
-                    # x, y, z = np.abs(x), np.abs(y), np.abs(z)
-
                     drawing_xyz_accel(movavg_g_data, x[shifting_frame:], y[shifting_frame:], z[shifting_frame:],
-                                      frame_length, accel_len, -20, 20)
+                                      frame_length, accel_len, -20, 30)
 
                     # for i in range(0, 5):
                     #     # print("Calculate similarity for each section = ", i)
@@ -256,6 +254,7 @@ if __name__ == '__main__':
                     #
                     #     r_x, r_y, r_z = da.calculate_pearson_correlation(movavg_g_data, x[shifting_frame:],
                     #                                                      y[shifting_frame:], z[shifting_frame:], i)
+                    #                                                     y[shifting_frame:], z[shifting_frame:], i)
                     #     # print("pearson_correlation_result = ", r_x, r_y, r_z)
                 else:
                     print("\r\n")
