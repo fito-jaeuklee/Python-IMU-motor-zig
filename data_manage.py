@@ -170,3 +170,24 @@ def time_shifting(ref_g_data, sample_x, sample_y, sample_z):
         # print("Z ref")
         z_frame = np.argmax(np.convolve(ref_g_data[::-1], sample_z, mode='valid'))
         return z_frame
+
+
+def time_shifting_mag(ref_g_data, sample):
+    print("Start time sync process")
+    check_x = []
+    print(sample)
+
+    for i in range(0, len(sample)):
+        if sample[i] > 0:
+            print("here")
+            check_x.append(True)
+    # check_x = sample > 0
+
+    print(check_x)
+
+    cnt_x = np.count_nonzero(check_x == True)
+
+    # if cnt_x > 1:
+    print("X ref")
+    x_frame = np.argmax(np.convolve(ref_g_data[::-1], sample, mode='valid'))
+    return x_frame

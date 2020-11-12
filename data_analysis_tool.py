@@ -11,6 +11,7 @@ from scipy.optimize import curve_fit
 from scipy.stats import linregress
 import warnings
 import data_manage as dm
+import math
 
 fs = 100
 section_frame_cut = [0, 2125, 4140, 6110, 8100, 10070]
@@ -93,6 +94,7 @@ def remove_overlap_or_very_close_x_axis(x_axis, y_axis):
                 sum_y = sum_y + y_axis[j]
                 z += 1
         sum_y_mean = sum_y / z
+        sum_y_mean = sum_y_mean * 0.3787
         rebuilding_y_axis.append(sum_y_mean)
 
     return rebuilding_x_axis, rebuilding_y_axis
@@ -108,17 +110,25 @@ def stft(sample):
 
     f, t, Zxx = signal.stft(sample, fs=100)
     plt.subplot(311)
-    plt.pcolormesh(t, f, np.abs(Zxx), vmin=0, vmax=200, shading='gouraud')
+    # plt.pcolormesh(t, f, np.abs(Zxx), vmin=0, vmax=50, shading='gouraud')
     # print("@@@@@@@", t, len(t), f, len(f), len(Zxx))
     for z in range(0, 129):
         for j in range(0, 72):
-            if np.abs(Zxx[z][j]) > 50:
+            if np.abs(Zxx[z][j]) > 5:
                 print("%%%%%%%%", np.abs(Zxx[z][j]), z, j)
                 reconstruct_x.append(j * 1.2622)
                 reconstruct_y.append(z)
+
     reconstruct_x, reconstruct_y = remove_overlap_or_very_close_x_axis(reconstruct_x, reconstruct_y)
+    # reconstruct_x = 100 * reconstruct_x
+    print(reconstruct_x)
     print(reconstruct_x, reconstruct_y)
+
+    for q in range(0, len(reconstruct_x)):
+        reconstruct_x[q] = reconstruct_x[q] * 100
+
     plt.plot(reconstruct_x, reconstruct_y)
+    print(reconstruct_x, reconstruct_y)
 
     # z = np.polyfit(reconstruct_x, reconstruct_y, 1)
     # p = np.poly1d(z)
@@ -135,6 +145,7 @@ def stft(sample):
 
     # plt.plot(f, np.abs(Zxx))
     # plt.show()
+    return reconstruct_x, reconstruct_y
 
 
 def correct_bias(x, y, z, shifting_frame):
@@ -209,10 +220,9 @@ def ModelAndScatterPlot(xData, yData, fittedParameters, exp_rsquared, ref_x_data
 
     axes.plot(xModel, yModel, '-r', label="y=%fln(x + %f) %f \n R-squared = %f"
                                           % (fittedParameters[0], fittedParameters[1], fittedParameters[2],
-                                              exp_rsquared))
+                                             exp_rsquared))
 
     print(xData, ref_x_data)
-
 
     # first the raw data as a scatter plot
     axes.plot(ref_x_data, ref_y_data, 'D')
@@ -288,26 +298,54 @@ def compare_rpm_LR_to_cell_data_NLR(ref_data_list, sum_data_list):
     ModelAndScatterPlot(x_data, y_data, fittedParameters, Rsquared, ref_x_data, ref_y_data, ref_fittedParameters,
                         ref_data_list, ref_Rsquared)
 
-# da.compare_rpm_LR_to_cell_data_NLR([0, 4.16, 8.36, 12.51, 16.7], sum_mean_list)
+
+def calculate_x_from_cell_y_value(cell_y_mean_sample):
+    x = []
+    for i in range(0, len(cell_y_mean_sample)):
+        x.append(math.exp((cell_y_mean_sample[i]+1019.4326)/247.761) - 61.2271)
+
+    print(x)
+    return x
 
 
+def calculate_reference_y_from_cell_x(cell_x_sample):
+    refer_y = []
+    for i in range(0, len(cell_x_sample)):
+        refer_y.append(4.2126 * cell_x_sample[i] - 0.02457)
+
+    return refer_y
+
+
+def validation_lr_nlr():
+
+    x_value = calculate_x_from_cell_y_value([0, 4.0489545, 7.994969, 11.795283, 15.625336])
+    y_refer_result = calculate_reference_y_from_cell_x(x_value)
+
+    print(y_refer_result)
+
+
+
+# validation_lr_nlr()
+
+# imuaccel_list, imugyro_list, imumag_list = one_cell_imu_data_extraction.loadv2("./cell data/vertical/angle-variance"
+#                                                                                "/cell_imu_data_test_14_0.im", True)
 #
-# imuaccel_list, imugyro_list, imumag_list = one_cell_imu_data_extraction.loadv2("./cell data/angle_variance/cell_imu_data_test_4_90.im",
-#                                                                                True)
+# y_f = butter_bandpass_filter(imumag_list[39000:50000, 1], 1, 6, 100, 3)
 #
-# y_f = butter_bandpass_filter(imumag_list[:, 0], 1, 3, 100, 3)
-#
-# y_s1 = butter_bandpass_filter(imumag_list[39000:42000, 2], 1, 2.5, 100, 1)
-# y_s2 = butter_bandpass_filter(imumag_list[42000:44300, 2], 2.5, 4.5, 100, 1)
-# y_s3 = butter_bandpass_filter(imumag_list[44300:46000, 2], 4.5, 5, 100, 1)
-# y_s4 = butter_bandpass_filter(imumag_list[46000:48000, 2], 5, 5.3, 100, 1)
+# y_s1 = butter_bandpass_filter(imumag_list[39000:42000, 1], 1, 2.5, 100, 1)
+# y_s2 = butter_bandpass_filter(imumag_list[42000:44300, 1], 2.5, 4.5, 100, 1)
+# y_s3 = butter_bandpass_filter(imumag_list[44300:46000, 1], 4.5, 5, 100, 1)
+# y_s4 = butter_bandpass_filter(imumag_list[46000:48000, 1], 5, 5.3, 100, 1)
 #
 # total_y = list(y_s1) + list(y_s2) + list(y_s3) + list(y_s4)
+# total_y = y_f
 #
 # plt.subplot(312)
 # frame_length = np.arange(0, len(total_y), 1)
 # plt.plot(frame_length, total_y, label="x")
-# stft(total_y)
+# stft_x_plot, stft_y_plot = stft(total_y)
+#
+# print("asdfajkh @@@@@@", stft_x_plot)
 #
 # # y_f1 = butter_bandpass_filter(imumag_list[40000:42000, 0], 1, 3, 100, 3)
 # # plt.subplot(312)
@@ -317,7 +355,7 @@ def compare_rpm_LR_to_cell_data_NLR(ref_data_list, sum_data_list):
 #
 # open_g_data = []
 # # print("Drawing G graph and x/y/z cell acceleration graph ")
-# with open('./cell data/angle_variance/rpm_data.txt', 'rb') as fp:
+# with open('./cell data/vertical/angle-variance/rpm_data.txt', 'rb') as fp:
 #     barr = fp.readlines()
 #     # print('total length', len(barr))
 #
@@ -326,6 +364,18 @@ def compare_rpm_LR_to_cell_data_NLR(ref_data_list, sum_data_list):
 # length = len(barr)
 # time = np.arange(0, length, 1)
 #
+# print("asldk;fjaf", stft_y_plot)
+#
 # plt.subplot(313)
 # plt.plot(time, open_g_data, label="RPM")
 # plt.show()
+#
+# shifting_frame = dm.time_shifting_mag(open_g_data, stft_y_plot)
+# print(shifting_frame, type(shifting_frame))
+#
+# plt.plot(time, open_g_data)
+# plt.plot(stft_x_plot + np.int64(1500), stft_y_plot)
+#
+# plt.show()
+
+

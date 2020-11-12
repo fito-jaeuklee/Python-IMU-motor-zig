@@ -10,9 +10,7 @@ import data_manage as dm
 
 
 data_count = 20000
-RESAMPLING_RATIO = 100 / 158.85
 COM_PORT_NAME = "/dev/tty.usbserial-1410"
-cut_max_limit = 13000
 saturation_sector = [3700, 4000, 5700, 6000, 7700, 8000, 9700, 10000]
 
 
@@ -26,9 +24,9 @@ def drawing_xyz_accel(g, ax, ay, az, time, accel_len, min, max):
 
     sum_mean_list, ref_mean_list = da.mean_each_sector(file_name, sum_xyz, g, saturation_sector)
     print(sum_mean_list, ref_mean_list)
-    # plot.plot(time, g, "-y", label="G-RPM")
-    plot.plot(time, g, "-y", label="Degree Per Second[DPS]-RPM")
-
+    plot.plot(time, g, "-y", label="G-RPM")
+    # plot.plot(time, g, "-y", label="Degree Per Second[DPS]-RPM")
+    #
     plot.plot(accel_len, ax, "-r", label="X")
     plot.plot(accel_len, ay, "-g", label="Y")
     plot.plot(accel_len, az, "-b", label="Z")
@@ -36,59 +34,14 @@ def drawing_xyz_accel(g, ax, ay, az, time, accel_len, min, max):
 
     plot.rcParams["figure.figsize"] = (12, 10)
 
-    # slope, inter, r_v, p_v, std_err = linregress(time[:10000], g[:10000])
-    # sum_sl, sum_inter, sum_r, sum_p, sum_str_err = linregress(accel_len[:10000], sum_xyz[:10000])
-    # print(slope, inter, r_v, p_v)
-    # print("RPM-G LR = %fx + %f" % (slope, inter))
-    # print("XYZ LR = %fx + %f" % (sum_sl, sum_inter))
-    #
-    # line_total = slope*time + inter
-    # sum_line = sum_sl * accel_len + sum_inter
-    #
-    # plot.plot(time[:10000], line_total[:10000], '-y')
-    #
-    # plot.plot(accel_len[:10000], sum_line[:10000], '-b')
-
-    # slope1, inter1, r_v1, p_v1, std_err1 = linregress(time[2100:4130], g[2100:4130])
-    # slope2, inter2, r_v2, p_v2, std_err2 = linregress(time[4130:6100], g[4130:6100])
-    # slope3, inter3, r_v3, p_v3, std_err3 = linregress(time[6100:8090], g[6100:8090])
-    # slope4, inter4, r_v4, p_v4, std_err4 = linregress(time[8090:10050], g[8090:10050])
-    #
-    # line1 = slope1 * time + inter1
-    # line2 = slope2 * time + inter2
-    # line3 = slope3 * time + inter3
-    # line4 = slope4 * time + inter4
-    #
-    # print("RPM-G1 LR = %fx + %f" % (slope1, inter1))
-    # print("RPM-G2 LR = %fx + %f" % (slope2, inter2))
-    # print("RPM-G3 LR = %fx + %f" % (slope3, inter3))
-    # print("RPM-G4 LR = %fx + %f" % (slope4, inter4))
-    #
-    # plot.plot(time[2100:4130], line1[2100:4130], '-y')
-    # plot.plot(time[4130:6100], line2[4130:6100], '-y')
-    # plot.plot(time[6100:8090], line3[6100:8090], '-y')
-    # plot.plot(time[8090:10050], line4[8090:10050], '-y')
-
-    # slope1, inter1, r_v1, p_v1, std_err1 = linregress(np.arange(0, 5), sum_mean_list)
-    # slope2, inter2, r_v2, p_v2, std_err2 = linregress(np.arange(0, 5), ref_mean_list)
-    #
-    # line1 = slope1 * np.arange(0, 5) + inter1
-    # line2 = slope2 * np.arange(0, 5) + inter2
-    #
-    # print("sum_mean_list LR = %fx + %f" % (slope1, inter1))
-    # print("ref_mean_list LR = %fx + %f" % (slope2, inter2))
-
-    # plot.plot(time[2100:4130], line1[2100:4130], '-y')
-    # plot.plot(time[4130:6100], line2[4130:6100], '-y')
-
-    plot.title('Degree Per Second from RPM')
+    plot.title('Gravitational acceleration from RPM')
 
     # Give x axis label for the sine wave plot
     plot.xlabel('frame')
 
     # Give y axis label for the sine wave plot
-    # plot.ylabel('g(9.8m/s2)')
-    plot.ylabel('DPS(º/s)')
+    plot.ylabel('g(9.8m/s2)')
+    # plot.ylabel('DPS(º/s)')
     plot.ylim(min, max)
     plot.grid(True)
     # frame.axes.get_yaxis().set_visible(False)
@@ -100,11 +53,11 @@ def drawing_xyz_accel(g, ax, ay, az, time, accel_len, min, max):
 
     cut_section = da.section_frame_cut
 
-    plot.axvline(x=cut_section[1], color='r')
-    plot.axvline(x=cut_section[2], color='r')
-    plot.axvline(x=cut_section[3], color='r')
-    plot.axvline(x=cut_section[4], color='r')
-    plot.axvline(x=cut_section[5], color='r')
+    # plot.axvline(x=cut_section[1], color='r')
+    # plot.axvline(x=cut_section[2], color='r')
+    # plot.axvline(x=cut_section[3], color='r')
+    # plot.axvline(x=cut_section[4], color='r')
+    # plot.axvline(x=cut_section[5], color='r')
 
     plot.rcParams["figure.figsize"] = (12, 6)
 
@@ -137,7 +90,7 @@ if __name__ == '__main__':
             dev = serial.Serial(COM_PORT_NAME, baudrate=2000000, timeout=0.3)
             time.sleep(1)
 
-            # print("Start RPM recording")
+            print("Start RPM recording")
             start = time.time()
             for _ in range(data_count):
                 dev.write(command)
@@ -145,9 +98,9 @@ if __name__ == '__main__':
                 data.append(line)
 
             # # print(data)
-            # print(len(data))
+            print(len(data))
             execution_time = time.time() - start
-            # print("Execution time = ", execution_time)
+            print("Execution time = ", execution_time)
 
             clean_data = dm.clean_serial_data(data)
 
@@ -162,7 +115,7 @@ if __name__ == '__main__':
                     fp.write(str(rpm) + '\n')
 
         elif command.decode("utf-8") == "2":
-            # print("Extract cell imu data ")
+            print("Extract cell imu data ")
             cell_com_port_name = one_cell_imu_data_extraction.get_cell_com_port(1155)
             # print(cell_com_port_name)
             nand_flag = one_cell_imu_data_extraction.read_and_save_imu_data(cell_com_port_name, dm.file_path,
@@ -241,7 +194,7 @@ if __name__ == '__main__':
 
                     accel_len = np.arange(0, len(imuaccel_list[shifting_frame:, 1]), 1)
 
-                    # x, y, z = da.correct_bias(x, y, z, shifting_frame)
+                    x, y, z = da.correct_bias(x, y, z, shifting_frame)
 
                     # x, y, z = np.abs(x), np.abs(y), np.abs(z)
 
@@ -294,15 +247,13 @@ if __name__ == '__main__':
                                       gy_z[shifting_frame:],
                                       dps_frame_length, gyro_len, -10, 2100)
 
-                    # for i in range(0, 5):
-                    #     print("Calculate similarity for each section = ", file_name, i)
-                    #     cos_x, cos_y, cos_z = da.calculate_cosine_similarity(movavg_dps_data, gy_x[shifting_frame:],
-                    #                                                          gy_y[shifting_frame:], gy_z[shifting_frame:], i)
-                    #     print("cosine_result = ", cos_x, cos_y, cos_z)
+                    # for i in range(0, 5): print("Calculate similarity for each section = ", file_name, i) cos_x,
+                    # cos_y, cos_z = da.calculate_cosine_similarity(movavg_dps_data, gy_x[shifting_frame:],
+                    # gy_y[shifting_frame:], gy_z[shifting_frame:], i) print("cosine_result = ", cos_x, cos_y, cos_z)
                     #
-                    #     r_x, r_y, r_z = da.calculate_pearson_correlation(movavg_dps_data, gy_x[shifting_frame:],
-                    #                                                      gy_y[shifting_frame:], gy_z[shifting_frame:], i)
-                    #     print("pearson_correlation_result = ", r_x, r_y, r_z)
+                    # r_x, r_y, r_z = da.calculate_pearson_correlation(movavg_dps_data, gy_x[shifting_frame:],
+                    # gy_y[shifting_frame:], gy_z[shifting_frame:], i) print("pearson_correlation_result = ", r_x,
+                    # r_y, r_z)
 
         elif command.decode('utf-8') == "7":
             print("Analyse magnetometer data")
