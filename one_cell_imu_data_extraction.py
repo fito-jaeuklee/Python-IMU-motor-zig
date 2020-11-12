@@ -82,6 +82,7 @@ def read_and_save_imu_data(port, file_save_path, filename, imu_page_size):
 
 
 def imuread_firmwarev2(fpath):
+    print(fpath)
     with open(fpath, 'rb') as f:
         barr = f.read()
         # print('total bytes', len(barr))
@@ -233,9 +234,9 @@ def erase_cell_nand_flash(port):
         ser = serial.Serial(port[0], BAUDRATE)
         ser.write(hex_erase_buf)
         in_bin = ser.read(SYSCOMMAND_ERASE_NAND_FLASH_RESP_SIZE)
-        # print("Data erase done..!")
+        print("Data erase done..!")
     except:
-        # print("Not open cell serial com port.")
+        print("Not open cell serial com port.")
         pass
 
 

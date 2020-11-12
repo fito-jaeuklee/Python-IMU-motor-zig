@@ -4,8 +4,8 @@ from scipy import signal
 import math
 
 hz_setup = 100
-RADIUS = 13
-file_path = "./cell data/6-5"
+RADIUS = 10
+file_path = "./cell data/horizontal/angle_variance/150"
 
 
 def clean_serial_data(data):
@@ -46,7 +46,7 @@ def save_to_txt(data, filename, execution_time):
     for line in resampled_data:
         cut_float_resample_data.append(line)
 
-    with open(filename, 'w') as fp:
+    with open(file_path + '/' + filename, 'w') as fp:
         for buf in cut_float_resample_data:
             fp.write(str(buf) + '\n')
 
@@ -74,7 +74,7 @@ def resampling_g_data(data, sampling_time):
 def load_rpm_to_g_data():
     g_data = []
     # print("Drawing G graph and x/y/z cell acceleration graph ")
-    with open(file_path + '/rpm_data.txt', 'rb') as fp:
+    with open(file_path + '/rpm_to_g_data.txt', 'rb') as fp:
         barr = fp.readlines()
         # print('total length', len(barr))
 

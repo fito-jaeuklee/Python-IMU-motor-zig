@@ -3,3 +3,5 @@ wav_files/
 venv/
 /cell data
 .idea/
+
+.DS_Store
