@@ -9,10 +9,13 @@ BAUDRATE = 230400
 CELL_IMU_CAL_RESP_SIZE = 128
 SYSCOMMAND_SET_READ_IMU_CAL = "AC C0 01 24 49"
 SYSCOMMAND_OLD_UPLOAD_IMU_DATA = "AC C0 01 E1 8C"
+SYSCOMMAND_OLD_UPLOAD_GPS_DATA = "AC C0 02 E0 00 8E"
 CELL_GPS_IMU_READ_CHUCK_SIZE = 2048
 SYSCOMMAND_ERASE_NAND_FLASH = "AC C0 01 15 78"
 SYSCOMMAND_ERASE_NAND_FLASH_RESP_SIZE = 7
 IMU_ERR_STR = "IMUERR"
+GPS_ERR_STR = "GPSERR"
+GPS_END_STR = "GPSEND"
 file_path = "./cell data"
 frame_to_time_scaler = 1 / 6000
 
@@ -80,6 +83,51 @@ def read_and_save_imu_data(port, file_save_path, filename, imu_page_size):
         return False
         pass
 
+
+def read_and_save_gps_data(port, file_save_path, filename, gps_page_size):
+    gps_data_chuck_validation_cnt = 0
+    cell_read_error_serial_g = []
+    print(" Start reading GPS data")
+    try:
+        with serial.Serial(port[0], BAUDRATE, timeout=1) as ser, \
+                open('%s/%s.gp' % (file_save_path, filename), mode='w+b') as f:
+
+            gps = bytes.fromhex(SYSCOMMAND_OLD_UPLOAD_GPS_DATA)
+            ser.write(gps)
+
+            gps_data_reading_end_flag = 1
+            gps_error_str_delete_flag = 0
+            while gps_data_reading_end_flag:
+                data = ser.read(CELL_GPS_IMU_READ_CHUCK_SIZE)
+                str_data = str(data)
+
+                if len(data) != CELL_GPS_IMU_READ_CHUCK_SIZE:
+                    if (str_data.find(GPS_END_STR)) != -1:
+                        gps_data_reading_end_flag = 0
+                    elif (str_data.find(GPS_ERR_STR)) != -1:
+                        # print("GPSERR", gps_data_chuck_validation_cnt)
+                        gps_data_reading_end_flag = 1
+                        gps_error_str_delete_flag = 0
+                    elif gps_data_chuck_validation_cnt > gps_page_size * 0.95:
+                        gps_data_reading_end_flag = 0
+                    else:
+                        print("GPS read error")
+                        gps_error_str_delete_flag = 1
+                        gps_data_reading_end_flag = 0
+                        cell_read_error_serial_g.append(filename)
+                if gps_error_str_delete_flag == 0:
+                    f.write(data)
+                    gps_error_str_delete_flag = 0
+                gps_data_chuck_validation_cnt += 1
+        return True
+    except:
+        print("Not open cell serial com port.")
+        return False
+        pass
+
+
+        # TODO : After reading gp/im data, check ERR count here
+        # Create a new file name with the number of ERR count added
 
 def imuread_firmwarev2(fpath):
     print(fpath)

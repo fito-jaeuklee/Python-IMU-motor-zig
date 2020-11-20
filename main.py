@@ -121,7 +121,13 @@ if __name__ == '__main__':
             print(cell_com_port_name)
             nand_flag = one_cell_imu_data_extraction.read_and_save_imu_data(cell_com_port_name, dm.file_path,
                                                                             "cell_imu_data_test-" + user_type_insert, 4000)
+            print("imu done")
+            time.sleep(1)
+            nand_flag = one_cell_imu_data_extraction.read_and_save_gps_data(cell_com_port_name, dm.file_path,
+                                                                            "cell_imu_data_test-" + user_type_insert, 4000)
+            print("gps done")
             if nand_flag == True:
+                print("Nand flash erase")
                 one_cell_imu_data_extraction.erase_cell_nand_flash(cell_com_port_name)
 
         elif command.decode('utf-8') == "3":
