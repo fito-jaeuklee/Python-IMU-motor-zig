@@ -220,38 +220,7 @@ if __name__ == '__main__':
                     print("\r\n")
 
         elif command.decode('utf-8') == "6":
-            print("")
-            dps_data, dps_frame_length = dm.load_rpm_to_dps_data()
-
-            movavg_dps_data = dm.moving_average_filter(dps_data)
-
-            file_list = os.listdir(dm.file_path)
-
-            for file_name in file_list:
-                # print(file_name)
-                if '.im' in file_name:
-                    imuaccel_list, imugyro_list, imumag_list = one_cell_imu_data_extraction.loadv2(
-                        dm.file_path + "/" + file_name, True)
-                    length = len(imugyro_list[:, 0])
-                    # print("IMU data length = ", length)
-                    gyro_len = np.arange(0, length, 1)
-                    print("----------------", len(gyro_len))
-
-                    gy_x, gy_y, gy_z = dm.check_absolute_val_and_change_value(imugyro_list[:, 0], imugyro_list[:, 1],
-                                                                           imugyro_list[:, 2])
-                    print(gy_x, gy_y, gy_z)
-
-                    # print("Time shifting")
-                    shifting_frame = dm.time_shifting(movavg_dps_data, gy_x, gy_y, gy_z)
-                    # print(shifting_frame)
-
-                    gyro_len = np.arange(0, len(imugyro_list[shifting_frame:, 1]), 1)
-
-                    gy_x, gy_y, gy_z = da.correct_bias(gy_x, gy_y, gy_z, shifting_frame)
-
-                    drawing_xyz_accel(movavg_dps_data, gy_x[shifting_frame:], gy_y[shifting_frame:],
-                                      gy_z[shifting_frame:],
-                                      dps_frame_length, gyro_len, -10, 2100)
+                    print("asdfsdfasdfdsfsd")
 
                     # for i in range(0, 5): print("Calculate similarity for each section = ", file_name, i) cos_x,
                     # cos_y, cos_z = da.calculate_cosine_similarity(movavg_dps_data, gy_x[shifting_frame:],
