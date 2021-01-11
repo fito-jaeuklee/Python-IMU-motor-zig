@@ -10,6 +10,7 @@ CELL_IMU_CAL_RESP_SIZE = 128
 SYSCOMMAND_SET_READ_IMU_CAL = "AC C0 01 24 49"
 SYSCOMMAND_OLD_UPLOAD_IMU_DATA = "AC C0 01 E1 8C"
 SYSCOMMAND_OLD_UPLOAD_GPS_DATA = "AC C0 02 E0 00 8E"
+SYSCOMMAND_OLD_UPLOAD_TEMP_DATA = "AC C0 01 E4 89"
 CELL_GPS_IMU_READ_CHUCK_SIZE = 2048
 SYSCOMMAND_ERASE_NAND_FLASH = "AC C0 01 15 78"
 SYSCOMMAND_ERASE_NAND_FLASH_RESP_SIZE = 7
@@ -125,9 +126,39 @@ def read_and_save_gps_data(port, file_save_path, filename, gps_page_size):
         return False
         pass
 
-
         # TODO : After reading gp/im data, check ERR count here
         # Create a new file name with the number of ERR count added
+
+
+def read_and_save_temp_data(port, file_save_path, filename, gps_page_size):
+    gps_data_chuck_validation_cnt = 0
+    cell_read_error_serial_g = []
+    print(" Start reading Temp data")
+    try:
+        with serial.Serial(port[0], BAUDRATE, timeout=1) as ser, \
+                open('%s/%s.txt' % (file_save_path, filename), mode='w+b') as f:
+
+            temp = bytes.fromhex(SYSCOMMAND_OLD_UPLOAD_TEMP_DATA)
+            ser.write(temp)
+
+            temp_data_reading_end_flag = 1
+            temp_error_str_delete_flag = 0
+            while temp_data_reading_end_flag:
+                data = ser.read(1)
+                str_data = str(data)
+
+                print(str_data)
+                print(len(str_data))
+                f.write(data)
+                if len(str_data) == 3:
+                    temp_data_reading_end_flag = 0
+
+        return True
+    except:
+        print("Not open cell serial com port.")
+        return False
+        pass
+
 
 def imuread_firmwarev2(fpath):
     print(fpath)
@@ -256,6 +287,34 @@ def loadv2(fpath, return_all=False):
     return imuac, imugy, imumag
 
 
+def imu_temp_load(fpath):
+    min_flag = 0
+    onehz_to_100hz_temp_list = []
+    print(fpath)
+    with open(fpath, 'rb') as f:
+        barr = f.read()
+        # print('total bytes', len(barr))
+        # bytes_object = bytes.fromhex(hex_name)
+        # ascii_name = bytes_object.decode("ASCII")
+
+        print(len(barr))
+
+        # print(barr)
+        print(int(barr[:1].hex(), 16))
+        print(barr[1:2])
+        print(barr[2:3])
+        print(barr[3:4])
+        print(int(barr[999:1000].hex(), 16))
+
+        for i in range(0, len(barr)):
+            for j in range(0, 100):
+                onehz_to_100hz_temp_list.append(int(barr[i:i + 1].hex(), 16))
+
+        onehz_to_100hz_temp_list = [x + (-50) for x in onehz_to_100hz_temp_list]
+
+    return onehz_to_100hz_temp_list, len(onehz_to_100hz_temp_list)
+
+
 def drawing_xyz_accel(x, y, z, time):
     # print("what?", time)
     plot.plot(time, x, "-r", label="X")
@@ -289,18 +348,5 @@ def erase_cell_nand_flash(port):
 
 
 if __name__ == '__main__':
-    # cell_com_port_name = get_cell_com_port(1155)
-    # # print(cell_com_port_name)
-    # read_and_save_imu_data(cell_com_port_name, file_path, "cell_imu_data_test", 4000)
-    # erase_cell_nand_flash(cell_com_port_name)
-
-    imuaccel_list = loadv2('./cell data/cell_imu_data_test.im', True)
-    length = len(imuaccel_list[:, 0])
-    time = np.arange(0, length, 1)
-    # print(imuaccel_list)
-    # print(imuaccel_list[:, 0])
-    sum_xyz = imuaccel_list[:, 0] + imuaccel_list[:, 1] + imuaccel_list[:, 2]
-    # print(sum_xyz)
-
-    drawing_xyz_accel(imuaccel_list[:, 0], imuaccel_list[:, 1], imuaccel_list[:, 2], time)
-    # drawing_xyz_accel(sum_xyz, sum_xyz, sum_xyz, time)
+    asd, len = imu_temp_load("./cell data/gyro_self_test/cell_imu_data_test_tt.txt")
+    print(asd)

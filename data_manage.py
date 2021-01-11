@@ -5,7 +5,7 @@ import math
 
 hz_setup = 100
 RADIUS = 10
-file_path = "./cell data"
+file_path = "./cell data/gyro_self_test"
 
 
 def clean_serial_data(data):
@@ -104,7 +104,6 @@ def load_rpm_to_dps_data():
 
 
 def check_absolute_val_and_change_value(sample_x, sample_y, sample_z):
-
     print("check1 ", sample_x[9000], sample_y[9000], np.mean(sample_z))
 
     if np.mean(sample_x) < 0:
