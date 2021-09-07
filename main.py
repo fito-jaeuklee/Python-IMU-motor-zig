@@ -1,4 +1,5 @@
 import serial
+import scipy
 import time
 import math
 import matplotlib.pyplot as plot
@@ -118,20 +119,20 @@ if __name__ == '__main__':
 
             cell_com_port_name = one_cell_imu_data_extraction.get_cell_com_port(1155)
             print(cell_com_port_name)
-            nand_flag = one_cell_imu_data_extraction.read_and_save_imu_data(cell_com_port_name, dm.file_path,
-                                                                            "cell_imu_data_test_" + user_type_insert,
-                                                                            4000)
-            print("imu done")
+            # nand_flag = one_cell_imu_data_extraction.read_and_save_imu_data(cell_com_port_name, dm.file_path,
+            #                                                                 "cell_imu_data_test_" + user_type_insert,
+            #                                                                 4000)
+            # print("imu done")
             time.sleep(1)
             nand_flag = one_cell_imu_data_extraction.read_and_save_gps_data(cell_com_port_name, dm.file_path,
                                                                             "cell_imu_data_test_" + user_type_insert,
-                                                                            4000)
+                                                                            8000)
             print("gps done")
 
-            nand_flag = one_cell_imu_data_extraction.read_and_save_temp_data(cell_com_port_name, dm.file_path,
-                                                                             "cell_imu_data_test_" + user_type_insert,
-                                                                             4000)
-            if nand_flag == True:
+            # nand_flag = one_cell_imu_data_extraction.read_and_save_temp_data(cell_com_port_name, dm.file_path,
+            #                                                                  "cell_imu_data_test_" + user_type_insert,
+            #                                                                  4000)
+            if True:
                 print("Nand flash erase")
                 one_cell_imu_data_extraction.erase_cell_nand_flash(cell_com_port_name)
 
@@ -286,6 +287,14 @@ if __name__ == '__main__':
 
         elif command.decode('utf-8') == "7":
             print("Analyse magnetometer data")
+        elif command.decode('utf-8') == "8":
+            print("Erase data !!!!!!!!!!!")
+            cell_com_port_name = one_cell_imu_data_extraction.get_cell_com_port(1155)
+            print(cell_com_port_name)
+            if True:
+                print("Nand flash erase")
+                one_cell_imu_data_extraction.erase_cell_nand_flash(cell_com_port_name)
+                print("Erase done!")
 
         else:
             print("Entered wrong number")

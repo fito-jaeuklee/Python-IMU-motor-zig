@@ -42,7 +42,7 @@ def get_cell_com_port(cell_vendor_id):
 
 
 def read_and_save_imu_data(port, file_save_path, filename, imu_page_size):
-    # print(port)
+    print(file_save_path)
     imu_data_chuck_validation_cnt = 0
     cell_read_error_serial = []
     # TODO : 플러그를 뽑는게 아니라 실제로 timeout 걸리는 데이터 플로우를 만들어서 체크해야함
@@ -178,6 +178,7 @@ def imuread_firmwarev2(fpath):
             configs = configs.split(b',')
             configs = list(map(to_float, configs))
             # # print('parsed:', configs)
+            print("pdf . com.  computer rule human indeed..!")
         hz = configs[0]
         saved_biases = configs[1:]
 

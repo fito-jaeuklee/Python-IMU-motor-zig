@@ -5,7 +5,7 @@ import math
 
 hz_setup = 100
 RADIUS = 10
-file_path = "./cell data/gyro_self_test"
+file_path = "./cell data"
 
 
 def clean_serial_data(data):
