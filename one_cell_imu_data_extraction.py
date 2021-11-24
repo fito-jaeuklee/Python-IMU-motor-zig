@@ -20,6 +20,9 @@ GPS_END_STR = "GPSEND"
 file_path = "./cell data"
 frame_to_time_scaler = 1 / 6000
 
+# Add new command - Renewal data manager
+DATA_READ_STOP = "AC C0 01 F3 9E"
+
 
 def to_float(x):
     try:
@@ -45,6 +48,7 @@ def read_and_save_imu_data(port, file_save_path, filename, imu_page_size):
     print(file_save_path)
     imu_data_chuck_validation_cnt = 0
     cell_read_error_serial = []
+    imu_loop_cnt = 0
     # TODO : 플러그를 뽑는게 아니라 실제로 timeout 걸리는 데이터 플로우를 만들어서 체크해야함
 
     try:
@@ -67,17 +71,39 @@ def read_and_save_imu_data(port, file_save_path, filename, imu_page_size):
 
                 if len(data) != CELL_GPS_IMU_READ_CHUCK_SIZE:
                     if (str_data.find(IMU_ERR_STR)) != -1:
+                        print(" Found IMUERR ")
                         imu_data_reading_end_flag = 1
                         imu_error_str_delete_flag = 0
                     elif imu_data_chuck_validation_cnt > imu_page_size * 0.95:
+                        print("IMU 0.95 Here")
+                        imu_data_reading_end_flag = 0
+                    elif (str_data.find("IMUEND")) != -1:
+                        print("end done")
                         imu_data_reading_end_flag = 0
                     else:
-                        imu_data_reading_end_flag = 0
-                        cell_read_error_serial.append(filename)
+                        print("IMU else length = ", len(data))
+                        # imu_data_reading_end_flag = 0
+                        # cell_read_error_serial.append(filename)
+
+                # if (str_data.find(IMU_ERR_STR)) != -1:
+                #     print("imuerr happen didn't write to file")
+                #     imu_error_str_delete_flag = 1
+
                 if imu_error_str_delete_flag == 0:
+                    imu_loop_cnt += 1
+                    print(imu_loop_cnt)
                     f.write(data)
                     imu_error_str_delete_flag = 0
                 imu_data_chuck_validation_cnt += 1
+
+            imu_err = bytes.fromhex("AC C0 01 25 48")
+            ser.write(imu_err)
+            error_count = ser.read(20)
+            str_data = str(hex(int.from_bytes(error_count, byteorder='big')))
+            cell_imu_error_count = int("0x" + str_data[16:18] + str_data[18:20], 0)
+            print("IMUERR count = ", cell_imu_error_count)
+            print("IMU loop cnt = ", imu_loop_cnt)
+
         return True
     except:
         # print("Not open cell serial com port.")
@@ -86,40 +112,75 @@ def read_and_save_imu_data(port, file_save_path, filename, imu_page_size):
 
 
 def read_and_save_gps_data(port, file_save_path, filename, gps_page_size):
+    # TODO: Return reading result to userinterface each cell
+    # TODO: Detect end of data
+
     gps_data_chuck_validation_cnt = 0
     cell_read_error_serial_g = []
+
     print(" Start reading GPS data")
     try:
         with serial.Serial(port[0], BAUDRATE, timeout=1) as ser, \
                 open('%s/%s.gp' % (file_save_path, filename), mode='w+b') as f:
 
+            t_end = time.time() + 40
+
             gps = bytes.fromhex(SYSCOMMAND_OLD_UPLOAD_GPS_DATA)
             ser.write(gps)
+
+            upload_command_response = ser.read(6)
+            print(upload_command_response)
 
             gps_data_reading_end_flag = 1
             gps_error_str_delete_flag = 0
             while gps_data_reading_end_flag:
-                data = ser.read(CELL_GPS_IMU_READ_CHUCK_SIZE)
-                str_data = str(data)
+                if time.time() < t_end:
+                    data = ser.read(CELL_GPS_IMU_READ_CHUCK_SIZE)
+                    str_data = str(data)
 
-                if len(data) != CELL_GPS_IMU_READ_CHUCK_SIZE:
-                    if (str_data.find(GPS_END_STR)) != -1:
-                        gps_data_reading_end_flag = 0
-                    elif (str_data.find(GPS_ERR_STR)) != -1:
-                        # print("GPSERR", gps_data_chuck_validation_cnt)
-                        gps_data_reading_end_flag = 1
+                    if len(data) != CELL_GPS_IMU_READ_CHUCK_SIZE:
+                        if (str_data.find(GPS_END_STR)) != -1:
+                            gps_data_reading_end_flag = 0
+                        elif (str_data.find(GPS_ERR_STR)) != -1:
+                            print("GPSERR", gps_data_chuck_validation_cnt)
+                            gps_data_reading_end_flag = 1
+                            gps_error_str_delete_flag = 0
+                        elif gps_data_chuck_validation_cnt > gps_page_size * 0.95:
+                            print("GPS 0.95 Here")
+                            gps_data_reading_end_flag = 0
+                        else:
+                            print("GPS else not 2048")
+                            # gps_error_str_delete_flag = 1
+                            # gps_data_reading_end_flag = 0
+                            cell_read_error_serial_g.append(filename)
+                    if gps_error_str_delete_flag == 0:
+                        f.write(data)
                         gps_error_str_delete_flag = 0
-                    elif gps_data_chuck_validation_cnt > gps_page_size * 0.95:
-                        gps_data_reading_end_flag = 0
-                    else:
-                        print("GPS read error")
-                        gps_error_str_delete_flag = 1
-                        gps_data_reading_end_flag = 0
-                        cell_read_error_serial_g.append(filename)
-                if gps_error_str_delete_flag == 0:
-                    f.write(data)
-                    gps_error_str_delete_flag = 0
-                gps_data_chuck_validation_cnt += 1
+                    gps_data_chuck_validation_cnt += 1
+                else:
+                    print("TIMEOUT ! ")
+                    # add cell data stream stop command
+                    while True:
+                        print("check1")
+                        data_stop = bytes.fromhex(DATA_READ_STOP)
+                        ser.write(data_stop)
+                        read_stop_response = ser.read(128)
+                        if "STOP" in str(read_stop_response):
+                            print(read_stop_response)
+                            print("check2")
+                            break
+                        else:
+                            print(read_stop_response)
+                            print("Not found STOP resp")
+                    break
+
+            gps_err = bytes.fromhex("AC C0 01 25 48")
+            ser.write(gps_err)
+            error_count = ser.read(20)
+            str_data = str(hex(int.from_bytes(error_count, byteorder='big')))
+            cell_gps_error_count = int("0x" + str_data[12:14] + str_data[14:16], 0)
+            print("GPSERR count = ", cell_gps_error_count)
+
         return True
     except:
         print("Not open cell serial com port.")

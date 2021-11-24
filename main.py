@@ -8,13 +8,14 @@ import os
 import one_cell_imu_data_extraction
 import data_analysis_tool as da
 import data_manage as dm
+from tkinter import filedialog
 
 data_count = 20000
 COM_PORT_NAME = "/dev/tty.usbserial-1440"
 saturation_sector = [3700, 4000, 5700, 6000, 7700, 8000, 9700, 10000]
 
 
-def drawing_xyz_accel(g, ax, ay, az, time, accel_len, min, max):
+def drawing_xyz_accel(ax, ay, az, accel_len, min, max):
     frame = plot.gca()
     # N = 55
     # re = np.convolve(g, np.ones((N,))/N, mode='valid')
@@ -22,15 +23,15 @@ def drawing_xyz_accel(g, ax, ay, az, time, accel_len, min, max):
 
     print(saturation_sector)
 
-    sum_mean_list, ref_mean_list = da.mean_each_sector(file_name, sum_xyz, g, saturation_sector)
-    print(sum_mean_list, ref_mean_list)
-    plot.plot(time, g, "-y", label="Temperature(cel)")
+    # sum_mean_list, ref_mean_list = da.mean_each_sector(file_name, sum_xyz, g, saturation_sector)
+    # print(sum_mean_list, ref_mean_list)
+    # plot.plot(time, g, "-y", label="Temperature(cel)")
     # plot.plot(time, g, "-y", label="Degree Per Second[DPS]-RPM")
     #
     plot.plot(accel_len, ax, "-r", label="X")
     plot.plot(accel_len, ay, "-g", label="Y")
     plot.plot(accel_len, az, "-b", label="Z")
-    plot.plot(accel_len, sum_xyz, label="SUM XYZ")
+    # plot.plot(accel_len, sum_xyz, label="SUM XYZ")
 
     plot.rcParams["figure.figsize"] = (12, 10)
 
@@ -63,7 +64,7 @@ def drawing_xyz_accel(g, ax, ay, az, time, accel_len, min, max):
 
     plot.show()
 
-    print("dfgjklahklgsd", ref_mean_list, sum_mean_list)
+    # print("dfgjklahklgsd", ref_mean_list, sum_mean_list)
 
     # da.compare_rpm_LR_to_cell_data_NLR(ref_mean_list, sum_mean_list)
 
@@ -118,39 +119,41 @@ if __name__ == '__main__':
             user_type_insert = input("Type cell data information = ")
 
             cell_com_port_name = one_cell_imu_data_extraction.get_cell_com_port(1155)
-            print(cell_com_port_name)
-            # nand_flag = one_cell_imu_data_extraction.read_and_save_imu_data(cell_com_port_name, dm.file_path,
-            #                                                                 "cell_imu_data_test_" + user_type_insert,
+            # print(cell_com_port_name)
+            # nand_flag = one_cell_imu_data_extraction.read_and_save_imu_data(cell_com_port_name,
+            #                                                                 dm.file_path,
+            #                                                                 "CLBX_imu_data_test_%s" % user_type_insert,
             #                                                                 4000)
             # print("imu done")
             time.sleep(1)
-            nand_flag = one_cell_imu_data_extraction.read_and_save_gps_data(cell_com_port_name, dm.file_path,
-                                                                            "cell_imu_data_test_" + user_type_insert,
+            nand_flag = one_cell_imu_data_extraction.read_and_save_gps_data(cell_com_port_name,
+                                                                            dm.file_path,
+                                                                            "CLBX_imu_data_test_%s" % user_type_insert,
                                                                             8000)
             print("gps done")
 
             # nand_flag = one_cell_imu_data_extraction.read_and_save_temp_data(cell_com_port_name, dm.file_path,
             #                                                                  "cell_imu_data_test_" + user_type_insert,
             #                                                                  4000)
-            if True:
+            if False:
                 print("Nand flash erase")
                 one_cell_imu_data_extraction.erase_cell_nand_flash(cell_com_port_name)
 
         elif command.decode('utf-8') == "3":
-            open_g_data, frame_length = dm.load_rpm_to_g_data()
+            # open_g_data, frame_length = dm.load_rpm_to_g_data()
+            im_file = filedialog.askopenfilename()
 
             file_list = os.listdir("./cell data")
 
             for file_name in file_list:
                 print(file_name)
                 imuaccel_list, imugyro_list, imumag_list = one_cell_imu_data_extraction.loadv2(
-                    "./cell data/" + file_name, True)
+                    im_file, True)
                 length = len(imuaccel_list[:, 0])
                 print("IMU data length = ", length)
                 accel_len = np.arange(0, length, 1)
 
-                drawing_xyz_accel(open_g_data, imuaccel_list[:, 0], imuaccel_list[:, 1], imuaccel_list[:, 2],
-                                  frame_length, accel_len)
+                drawing_xyz_accel(imuaccel_list[:, 0], imuaccel_list[:, 1], imuaccel_list[:, 2], accel_len, -20, 20)
 
         elif command.decode('utf-8') == "4":
             open_g_data, frame_length = dm.load_rpm_to_g_data()
